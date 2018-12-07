@@ -1,0 +1,23 @@
+{
+	"FileVersion": 1,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "UE4SARL",
+	"Description": "This plugin provides a link between UE4 and the SARL agent programming language.",
+	"Category": "Mobile",
+	"CreatedBy": "Alexandre Lombard",
+	"CreatedByURL": "github.com/alexandrelombard",
+	"Modules": [
+		{
+			"Name": "UE4SARL",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [ "Win64", "Win32", "Mac", "Linux", "Android", "IOS" ]
+		}
+	],
+	"EnabledByDefault": false,
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"EngineVersion": "4.21.0"
+}
