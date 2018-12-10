@@ -6,7 +6,7 @@
 #include "Influence.h"
 #include "PerceptionList.h"
 
-#include "UdpInfluenceReceiver.generated.h"
+#include "UdpSarlInterface.generated.h"
 
 UCLASS(BlueprintType)
 class AUdpSarlInterface : public AActor
@@ -33,7 +33,7 @@ public:
 			const int32 Port);
 
 	UFUNCTION(BlueprintCallable, Category = "SARL")
-		bool EmitPerceptions(const FPerceptionListData& Perceptions);
+		bool EmitPerceptions(FPerceptionListData& Perceptions);
 
 	/** Initialize the UDP receiver */
 	UFUNCTION(BlueprintCallable, Category = "SARL")

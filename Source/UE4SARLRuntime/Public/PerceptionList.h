@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Perception.generated.h"
+#include "PerceptionList.generated.h"
 
 USTRUCT(BlueprintType)
 struct FPerceptionListData
@@ -20,12 +20,18 @@ struct FPerceptionListData
 
 FORCEINLINE FArchive& operator<<(FArchive &Ar, FPerceptionListData& PerceptionData)
 {
-	Ar << PerceptionData.ID;
-    Ar << Perceptions.Num();
+#if PLATFORM_LITTLE_ENDIAN
+	Ar.SetByteSwapping(true);
+#endif
 
-    for(int32 Idx = 0; Idx < Perceptions.Num(); Idx++)
+	int32 PerceptionsCount = PerceptionData.Perceptions.Num();	// Useless, but won't compile if PerceptionData.Perceptions.Num() is written directly
+
+	Ar << PerceptionData.ID;
+    Ar << PerceptionsCount;
+
+    for(int32 Idx = 0; Idx < PerceptionData.Perceptions.Num(); Idx++)
     {
-        Ar << Perceptions[Idx];
+        Ar << PerceptionData.Perceptions[Idx];
     }
 
 	return Ar;

@@ -82,11 +82,14 @@ bool AUdpSarlInterface::StartUdpReceiver(
 }
 
 bool AUdpSarlInterface::EmitPerceptions(
-	const TArray<FPerceptionListData>& Perceptions)
+	FPerceptionListData& Perceptions)
 {
 	FArrayWriter Writer;
 	Writer << Perceptions;								// Serializing the perception list
-	SendSocket->Send(Writer.GetData(), Writer.Num());	// Sending them
+	int32 ReadBytes = 0;
+	SendSocket->Send(Writer.GetData(), Writer.Num(), ReadBytes);	// Sending them
+
+	return ReadBytes == Writer.Num();
 }
 
 void AUdpSarlInterface::Recv(const FArrayReaderPtr& ArrayReaderPtr, const FIPv4Endpoint& EndPt)
