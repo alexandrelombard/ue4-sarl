@@ -3,46 +3,39 @@
 //Networking
 #include "Networking.h"
 
+#include "Influence.h"
+#include "PerceptionList.h"
+
 #include "UdpInfluenceReceiver.generated.h"
 
-USTRUCT(BlueprintType)
-struct FInfluenceData
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SARL")
-		FString ID = "";
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SARL")
-		FVector Influence;
-
-	FInfluenceData() {}
-};
-
-FORCEINLINE FArchive& operator<<(FArchive &Ar, FInfluenceData& InfluenceData)
-{
-	Ar << InfluenceData.ID;
-	Ar << InfluenceData.Influence;
-
-	return Ar;
-}
-
 UCLASS(BlueprintType)
-class AUdpInfluenceReceiver : public AActor
+class AUdpSarlInterface : public AActor
 {
 	GENERATED_UCLASS_BODY()
 public:
 	/** Data has been received */
 	UFUNCTION(BlueprintImplementableEvent)
-		void BPEvent_DataReceived(const FInfluenceData& ReceivedData);
+		void BPEvent_DataReceived(FInfluenceData ReceivedData);
 
 public:
 	FSocket * ListenSocket;
+	FSocket * SendSocket;
 
 	FUdpSocketReceiver* UdpReceiver = nullptr;
 
 	void Recv(const FArrayReaderPtr& ArrayReaderPtr, const FIPv4Endpoint& EndPt);
+	
+	/** Initialize the UDP emitter */
+	UFUNCTION(BlueprintCallable, Category = "SARL")
+		bool StartUdpEmitter(
+			const FString& SocketName,
+			const FString& IpAddress,
+			const int32 Port);
 
+	UFUNCTION(BlueprintCallable, Category = "SARL")
+		bool EmitPerceptions(const FPerceptionListData& Perceptions);
+
+	/** Initialize the UDP receiver */
 	UFUNCTION(BlueprintCallable, Category = "SARL")
 		bool StartUdpReceiver(
 			const FString& SocketName,
