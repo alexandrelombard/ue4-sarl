@@ -125,8 +125,19 @@ void AUdpSarlInterface::Recv(const FArrayReaderPtr& ArrayReaderPtr, const FIPv4E
 
 	//*ArrayReaderPtr << Data;
 
-	AsyncTask(ENamedThreads::GameThread, [Data, this]() {
-		// Calling in the GameThread, so influences can be applied
-		BPEvent_DataReceived(Data);
-	});
+	if (!PendingInfluences.Contains(Data.ID))
+		PendingInfluences.Add(Data.ID, false);
+
+	// If there is a pending influence for the given ID, we won't accept more influences
+	if(!PendingInfluences[Data.ID])
+	{
+		PendingInfluences[Data.ID] = true;
+
+		AsyncTask(ENamedThreads::GameThread, [Data, this]() {
+			// Calling in the GameThread, so influences can be applied
+			BPEvent_DataReceived(Data);
+
+			PendingInfluences[Data.ID] = false;
+		});
+	}
 }

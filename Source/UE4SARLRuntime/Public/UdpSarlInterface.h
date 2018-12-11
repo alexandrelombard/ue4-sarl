@@ -49,4 +49,6 @@ public:
 
 private:
 	TSharedPtr<FInternetAddr> RemoteAddr;
+
+	TMap<FString, bool> PendingInfluences;
 };
