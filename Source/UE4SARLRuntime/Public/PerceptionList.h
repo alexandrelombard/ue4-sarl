@@ -20,10 +20,6 @@ struct FPerceptionListData
 
 FORCEINLINE FArchive& operator<<(FArchive &Ar, FPerceptionListData& PerceptionData)
 {
-#if PLATFORM_LITTLE_ENDIAN
-	Ar.SetByteSwapping(true);
-#endif
-
 	int32 PerceptionsCount = PerceptionData.Perceptions.Num();	// Useless, but won't compile if PerceptionData.Perceptions.Num() is written directly
 
 	Ar << PerceptionData.ID;
@@ -33,6 +29,10 @@ FORCEINLINE FArchive& operator<<(FArchive &Ar, FPerceptionListData& PerceptionDa
     {
         Ar << PerceptionData.Perceptions[Idx];
     }
+
+//#if PLATFORM_LITTLE_ENDIAN
+//	Ar.SetByteSwapping(true);
+//#endif
 
 	return Ar;
 }

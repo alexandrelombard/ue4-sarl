@@ -33,22 +33,24 @@ bool AUdpSarlInterface::StartUdpEmitter(
 	const FString& SocketName,
 	const FString& IpAddress,
 	const int32 Port) {
-	FIPv4Address Addr;
-	FIPv4Address::Parse(IpAddress, Addr);
+	//Create Remote Address.
+	RemoteAddr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
 
-	//Create Socket
-	FIPv4Endpoint Endpoint(Addr, Port);
+	bool bIsValid;
+	RemoteAddr->SetIp(*IpAddress, bIsValid);
+	RemoteAddr->SetPort(Port);
 
-	//BUFFER SIZE
-	int32 BufferSize = 2 * 1024 * 1024;
+	if(bIsValid)
+	{
+		const int32 SendSize = 2 * 1024 * 1024;
 
-	SendSocket = FUdpSocketBuilder(*SocketName)
-		.AsNonBlocking()
-		.AsReusable()
-		.BoundToEndpoint(Endpoint)
-		.WithReceiveBufferSize(BufferSize);
+		SendSocket = FUdpSocketBuilder(*SocketName)
+			.AsReusable()
+//			.WithBroadcast()
+			.WithSendBufferSize(SendSize);
+	}
 
-	return true;
+	return SendSocket != nullptr;
 }
 
 // Start UDP Receiver
@@ -71,25 +73,43 @@ bool AUdpSarlInterface::StartUdpReceiver(
 		.BoundToEndpoint(Endpoint)
 		.WithReceiveBufferSize(BufferSize);
 
-	FTimespan ThreadWaitTime = FTimespan::FromMilliseconds(100);
-	UdpReceiver = new FUdpSocketReceiver(ListenSocket, ThreadWaitTime, TEXT("UDP RECEIVER"));
-	UdpReceiver->OnDataReceived().BindUObject(this, &AUdpSarlInterface::Recv);
+	if(ListenSocket != nullptr)
+	{
+		FTimespan ThreadWaitTime = FTimespan::FromMilliseconds(100);
+		UdpReceiver = new FUdpSocketReceiver(ListenSocket, ThreadWaitTime, TEXT("UDP RECEIVER"));
+		UdpReceiver->OnDataReceived().BindUObject(this, &AUdpSarlInterface::Recv);
 
-	// Everything is set, let's start
-	UdpReceiver->Start();
+		// Everything is set, let's start
+		UdpReceiver->Start();
+	}
 
-	return true;
+	return ListenSocket != nullptr;
 }
 
 bool AUdpSarlInterface::EmitPerceptions(
-	FPerceptionListData& Perceptions)
+	FPerceptionListData Perceptions)
 {
-	FArrayWriter Writer;
-	Writer << Perceptions;								// Serializing the perception list
-	int32 ReadBytes = 0;
-	SendSocket->Send(Writer.GetData(), Writer.Num(), ReadBytes);	// Sending them
+	FBufferArchive Writer;
 
-	return ReadBytes == Writer.Num();
+#if PLATFORM_LITTLE_ENDIAN
+	Writer.SetByteSwapping(true);
+#endif
+
+	int32 PerceptionsCount = Perceptions.Perceptions.Num();	// Useless, but won't compile if PerceptionData.Perceptions.Num() is written directly
+
+	Writer << Perceptions.ID;
+	Writer << PerceptionsCount;
+
+	for (int32 Idx = 0; Idx < Perceptions.Perceptions.Num(); Idx++)
+	{
+		Writer << Perceptions.Perceptions[Idx];
+	}
+
+	//Writer << Perceptions;								// Serializing the perception list
+	int32 SentBytes = 0;
+	SendSocket->SendTo(Writer.GetData(), Writer.Num(), SentBytes, *RemoteAddr);	// Sending them
+
+	return SentBytes == Writer.Num();
 }
 
 void AUdpSarlInterface::Recv(const FArrayReaderPtr& ArrayReaderPtr, const FIPv4Endpoint& EndPt)
