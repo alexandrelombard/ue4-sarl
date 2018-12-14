@@ -87,6 +87,37 @@ bool AUdpSarlInterface::StartUdpReceiver(
 }
 
 bool AUdpSarlInterface::EmitPerceptions(
+	const FString& PerceiverID,
+	const FTransform& BodyTransform,
+	const TArray<AActor*>& PerceivedActors)
+{
+	FBufferArchive Writer;
+
+#if PLATFORM_LITTLE_ENDIAN
+	Writer.SetByteSwapping(true);
+#endif
+
+	int32 PerceptionsCount = PerceivedActors.Num();	// Useless, but won't compile if PerceptionData.Perceptions.Num() is written directly
+	FString CopyPerceiverID(PerceiverID);
+
+	Writer << CopyPerceiverID;
+	Writer << PerceptionsCount;
+
+	for (auto& Actor : PerceivedActors)
+	{
+		FVector WorldPosition = Actor->GetActorLocation();
+		WorldPosition = BodyTransform.InverseTransformPosition(WorldPosition);
+		Writer << WorldPosition;
+	}
+
+	//Writer << Perceptions;								// Serializing the perception list
+	int32 SentBytes = 0;
+	SendSocket->SendTo(Writer.GetData(), Writer.Num(), SentBytes, *RemoteAddr);	// Sending them
+
+	return SentBytes == Writer.Num();
+}
+
+bool AUdpSarlInterface::EmitPerceptionList(
 	FPerceptionListData Perceptions)
 {
 	FBufferArchive Writer;

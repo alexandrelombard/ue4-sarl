@@ -32,8 +32,17 @@ public:
 			const FString& IpAddress,
 			const int32 Port);
 
+	/** 
+	 * Emit perceptions
+	 * @param PerceiverID the ID of the perceiver
+	 * @param BodyTransform the transform of the perceiver
+	 * @param PerceivedActors the list of perceived actors
+	 */
 	UFUNCTION(BlueprintCallable, Category = "SARL")
-		bool EmitPerceptions(FPerceptionListData Perceptions);
+		bool EmitPerceptions(const FString& PerceiverID, const FTransform& BodyTransform, const TArray<AActor*>& PerceivedActors);
+
+	UFUNCTION(BlueprintCallable, Category = "SARL")
+		bool EmitPerceptionList(FPerceptionListData Perceptions);
 
 	/** Initialize the UDP receiver */
 	UFUNCTION(BlueprintCallable, Category = "SARL")
